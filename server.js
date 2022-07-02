@@ -2,97 +2,40 @@ const express = require('express')
 const app = express()
 const cors = require('cors')
 const PORT = 8000
+const MongoClient = require('mongodb').MongoClient
+require('dotenv').config()
 
 app.use(cors())
+app.use(express.json())
 
-const gang90210 = {
-    'brenda':{
-        'fullName': 'Brenda Walsh' ,
-        'actor': 'Shannen Doherty',
-        'parents': 'Jim and Cindy', 
-        'siblings': 'Brandon (Twin)',
-        'relationships': 'Dylan McKay, Rick from Paris, Stuart Carson ' ,
-    },
+let db,
+    dbConnectionString = process.env.DB_STRING,
+    dbName = 'Cluster0',
+    collection
 
-    'brandon':{
-        'fullName': 'Brandon Walsh',
-        'actor': 'Jason Priestley' ,
-        'parents': 'Jim and Cindy' , 
-        'siblings': 'Brenda (Twin)',
-        'relationships': 'Nikki Witt, Emily Valentine, Kelly Taylor, Susan Keats, Tracy Gaylian' ,
-    },
-
-    'kelly':{
-        'fullName': 'Kelly Taylor' ,
-        'actor': 'Jennie Garth',
-        'parents': 'Jackie and Bill', 
-        'siblings': 'Erin Silver (half-sister), David Silver (step-brother)',
-        'relationships': 'Dylan McKay, Brandon Walsh, Colin Robbins,  Matt Durning' ,
-    },
-
-    'steve':{
-        'fullName': 'Steve Sanders' ,
-        'actor': 'Ian Ziering',
-        'parents': 'Rush and Samantha', 
-        'siblings': 'Ryan and Austin (half-brothers',
-        'relationships': 'Celeste Lundy, Claire Arnold, Janet Sosna' ,
-    },
-
-    'andrea':{
-        'fullName': 'Andrea Zuckerman' ,
-        'actor': 'Gabrielle Carteris',
-        'parents': 'Kenny and Gail, but Grandma Rose is the one featured', 
-        'siblings': 'none',
-        'relationships': 'Dan Rubin, Jesse Vasquez, Peter Tucker' ,
-    },
-
-    'dylan':{
-        'fullName': 'Dylan McKay' ,
-        'actor': 'Luke Perry',
-        'parents': 'Iris and Jack', 
-        'siblings': 'Erica (alleged half-sister)',
-        'relationships': 'Brenda Walsh, Kelly Taylor, Toni Marchette, Gina Kincaid' ,
-    },
-
-    'david':{
-        'fullName': 'David Silver' ,
-        'actor': 'Brian Austin Green',
-        'parents': 'Mel and Shelia', 
-        'siblings': 'Erin (half-sister), Kelly Taylor(step-sister)',
-        'relationships': 'Donna Martin, Claire Arnold, Valerie Malone',
-    },
-
-    'donna':{
-        'fullName': 'Donna Martin' ,
-        'actor': 'Tori Spelling',
-        'parents': 'John and Felice', 
-        'siblings': 'Gina Kincaid (secret half-sister)',
-        'relationships': 'David Silver, Ray Pruit, Joe Bradley, Noah Hunter',
-    },
-
-    'unknown':{
-        'fullName': 'unknown' ,
-        'actor': 'unknown',
-        'parents': 'unknown', 
-        'siblings': 'unknown',
-        'relationships': 'unknown',
-    },
-}
+MongoClient.connect(dbConnectionString)
+    .then(client => {
+        console.log('Connected to Database')
+        db = client.db(dbName)
+        collection = db.collection('Cluster0')
 
 app.get('/', (request, response) => {
     response.sendFile(__dirname + '/index.html')
 })
 
 app.get('/api/:characterName', (request, response) => {
-    const charName = request.params.characterName.toLowerCase()
+    const charName = request.params.characterName.toUpperCase()
 
-    if(gang90210[charName]){
-        response.json(gang90210[charName])
-    }
-    else{
-        response.json(gang90210['unknown'])
-    }
+    collection.find({name: charName}).toArray()
+    .then(results => {
+        console.log(results)
+        response.json(results[0])
+    })
+    .catch(error => console.error(error))
 })
+})
+
+.catch(error => console.error)
 
 app.listen(process.env.PORT || PORT, () => {
     console.log("Server is Running")
